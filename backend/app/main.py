@@ -1,11 +1,10 @@
 """FastAPI application entry point."""
 from __future__ import annotations
 
-import re
 from io import BytesIO
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 
@@ -19,7 +18,6 @@ from .queries import (
 from .schemas import ExportPayload, FilterOptions, FilterPayload, TableResponse
 from .services.excel_builder import build_workbook
 
-DQM_ID_PATTERN = re.compile(r"^[A-Za-z0-9_\-]{1,64}$")
 EXCEL_MEDIA = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 EXPORT_FILENAME = "BoP_generated.xlsx"
 
@@ -42,13 +40,6 @@ def _df_to_response(df: pd.DataFrame) -> TableResponse:
     )
 
 
-def _validate_dqm_id(dqm_id: str) -> str:
-    dqm_id = dqm_id.strip()
-    if not dqm_id or not DQM_ID_PATTERN.match(dqm_id):
-        raise HTTPException(status_code=400, detail="Invalid dqm_id format.")
-    return dqm_id
-
-
 @app.get("/api/health")
 def health() -> dict[str, str]:
     return {"status": "ok"}
@@ -58,7 +49,7 @@ def health() -> dict[str, str]:
 def filter_options() -> FilterOptions:
     with get_connection() as conn:
         opts = query_filter_options(conn)
-    return FilterOptions(**opts)
+    return FilterOptions(**opts)  # type: ignore[arg-type]
 
 
 @app.post("/api/model-inventory", response_model=TableResponse)
@@ -75,24 +66,19 @@ def model_limitations(payload: FilterPayload) -> TableResponse:
     return _df_to_response(df)
 
 
-@app.get("/api/dqm/{dqm_id}", response_model=TableResponse)
-def dqm_lookup(dqm_id: str) -> TableResponse:
-    dqm_id = _validate_dqm_id(dqm_id)
+@app.post("/api/dqm", response_model=TableResponse)
+def dqm_list(payload: FilterPayload) -> TableResponse:
     with get_connection() as conn:
-        df = query_dqm(conn, dqm_id)
+        df = query_dqm(conn, payload)
     return _df_to_response(df)
 
 
 @app.post("/api/export/excel")
 def export_excel(payload: ExportPayload) -> StreamingResponse:
-    dqm_id = _validate_dqm_id(payload.dqm_id) if payload.dqm_id else None
-
     with get_connection() as conn:
         inventory_df = query_model_inventory(conn, payload.filters)
+        dqm_df = query_dqm(conn, payload.filters)
         limitations_df = query_model_limitations(conn, payload.filters)
-        dqm_df = query_dqm(conn, dqm_id) if dqm_id else pd.DataFrame(
-            columns=["DQM ID", "DQM Name", "DQM Category", "DQM Owner"]
-        )
 
     blob = build_workbook(inventory_df, dqm_df, limitations_df)
     return StreamingResponse(

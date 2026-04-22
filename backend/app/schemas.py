@@ -14,13 +14,13 @@ class FilterPayload(BaseModel):
 
 class ExportPayload(BaseModel):
     filters: FilterPayload = Field(default_factory=FilterPayload)
-    dqm_id: str | None = None
 
 
 class FilterOptions(BaseModel):
     regions: list[str]
     countries: list[str]
     statuses: list[str]
+    countries_by_region: dict[str, list[str]] = Field(default_factory=dict)
 
 
 class TableResponse(BaseModel):

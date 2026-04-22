@@ -11,7 +11,6 @@ import {
   fetchInventory,
   fetchLimitations,
   type FilterPayload,
-  type TableResponse,
 } from "./api/client";
 
 const TAB_INVENTORY = "inventory";
@@ -23,8 +22,6 @@ const EMPTY_FILTERS: FilterPayload = { regions: [], countries: [], statuses: [] 
 export default function App() {
   const [filters, setFilters] = useState<FilterPayload>(EMPTY_FILTERS);
   const [appliedFilters, setAppliedFilters] = useState<FilterPayload>(EMPTY_FILTERS);
-  const [dqmId, setDqmId] = useState("");
-  const [appliedDqmId, setAppliedDqmId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(TAB_INVENTORY);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
@@ -44,14 +41,12 @@ export default function App() {
   });
 
   const dqmQuery = useQuery({
-    queryKey: ["dqm", appliedDqmId],
-    queryFn: () => fetchDqm(appliedDqmId as string),
-    enabled: !!appliedDqmId,
+    queryKey: ["dqm", appliedFilters],
+    queryFn: () => fetchDqm(appliedFilters),
   });
 
   const downloadMutation = useMutation({
-    mutationFn: () =>
-      downloadExcel(appliedFilters, appliedDqmId && appliedDqmId.length > 0 ? appliedDqmId : null),
+    mutationFn: () => downloadExcel(filters),
     onError: (e: unknown) => setErrorBanner(extractError(e, "Failed to generate Excel.")),
   });
 
@@ -68,18 +63,11 @@ export default function App() {
     }
   }, [inventoryQuery.error, limitationsQuery.error, dqmQuery.error]);
 
-  const onApply = () => {
-    setAppliedFilters(filters);
-    setAppliedDqmId(dqmId.trim() ? dqmId.trim() : null);
-  };
+  const onApply = () => setAppliedFilters(filters);
 
   const onDownload = () => {
-    // Always reflect the most recently applied state — but if user typed but
-    // didn't click apply yet, sync first so download matches what they see.
     setAppliedFilters(filters);
-    const trimmed = dqmId.trim();
-    setAppliedDqmId(trimmed ? trimmed : null);
-    setTimeout(() => downloadMutation.mutate(), 0);
+    downloadMutation.mutate();
   };
 
   const tabs = [
@@ -105,24 +93,21 @@ export default function App() {
       <TopBar />
 
       <main className="mx-auto max-w-[1280px] px-6 py-6">
-        <div className="mb-5 flex items-end justify-between">
-          <div>
-            <h2 className="text-2xl font-semibold tracking-tight text-ink-primary">
-              Model Inventory &amp; EUC
-            </h2>
-            <p className="mt-1 text-sm text-ink-secondary">
-              Filter by Region, Country and Model Status, look up DQM by ID, and
-              export everything to a single Excel workbook.
-            </p>
-          </div>
+        <div className="mb-5">
+          <h2 className="text-2xl font-semibold tracking-tight text-ink-primary">
+            Model Inventory &amp; EUC
+          </h2>
+          <p className="mt-1 text-sm text-ink-secondary">
+            Filter by Region, Country and Model Status across all three
+            datasets, preview below, and export everything to a single Excel
+            workbook.
+          </p>
         </div>
 
         <FilterPanel
           options={optionsQuery.data}
           filters={filters}
           setFilters={setFilters}
-          dqmId={dqmId}
-          setDqmId={setDqmId}
           onApply={onApply}
           onDownload={onDownload}
           applying={
@@ -153,17 +138,8 @@ export default function App() {
             )}
             {activeTab === TAB_DQM && (
               <DataTable
-                data={
-                  appliedDqmId
-                    ? dqmQuery.data
-                    : ({ columns: ["DQM ID", "DQM Name", "DQM Category", "DQM Owner"], rows: [] } satisfies TableResponse)
-                }
+                data={dqmQuery.data}
                 loading={dqmQuery.isFetching}
-                emptyMessage={
-                  appliedDqmId
-                    ? `No DQM record found for "${appliedDqmId}".`
-                    : "Enter a DQM ID above and click Apply Filters to query."
-                }
                 monoColumns={["DQM ID"]}
               />
             )}

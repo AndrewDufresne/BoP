@@ -42,10 +42,10 @@ API surface:
 | Method | Path | Purpose |
 |---|---|---|
 | GET  | `/api/health`                 | Liveness probe |
-| GET  | `/api/filters/options`        | Distinct Region / Country / Status |
+| GET  | `/api/filters/options`        | Distinct Region / Country / Status + cascade map |
 | POST | `/api/model-inventory`        | Inventory rows (filtered) |
 | POST | `/api/model-limitations`      | Limitations rows (filtered) |
-| GET  | `/api/dqm/{dqm_id}`           | Single DQM lookup |
+| POST | `/api/dqm`                    | DQM rows (filtered by Region / Country) |
 | POST | `/api/export/excel`           | Streamed `BoP_generated.xlsx` |
 
 ## Frontend

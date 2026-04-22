@@ -9,6 +9,7 @@ export interface FilterOptions {
   regions: string[];
   countries: string[];
   statuses: string[];
+  countries_by_region: Record<string, string[]>;
 }
 
 export interface FilterPayload {
@@ -31,16 +32,13 @@ export const fetchInventory = (payload: FilterPayload) =>
 export const fetchLimitations = (payload: FilterPayload) =>
   api.post<TableResponse>("/model-limitations", payload).then((r) => r.data);
 
-export const fetchDqm = (dqmId: string) =>
-  api.get<TableResponse>(`/dqm/${encodeURIComponent(dqmId)}`).then((r) => r.data);
+export const fetchDqm = (payload: FilterPayload) =>
+  api.post<TableResponse>("/dqm", payload).then((r) => r.data);
 
-export const downloadExcel = async (
-  filters: FilterPayload,
-  dqmId: string | null
-) => {
+export const downloadExcel = async (filters: FilterPayload) => {
   const response = await api.post(
     "/export/excel",
-    { filters, dqm_id: dqmId },
+    { filters },
     { responseType: "blob" }
   );
   const blob = new Blob([response.data], {
