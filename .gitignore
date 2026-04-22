@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.venv/
+__pycache__/
+*.pyc
+.env
+.DS_Store
+backend/data/*.db
+.github/*
+awesome-design-md/*
+Doc/*
+Excel_generation_sample_code.py

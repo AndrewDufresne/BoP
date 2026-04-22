@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: Inter, -apple-system, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-feature-settings: "cv11", "ss01";
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #ffffff;
+  color: #1a1f2c;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* HSBC red focus ring */
+.focus-ring:focus-visible {
+  outline: none;
+  border-color: #db0011;
+  box-shadow: 0 0 0 3px #fdecee;
+}
