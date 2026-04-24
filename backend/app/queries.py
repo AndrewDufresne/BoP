@@ -26,11 +26,22 @@ def _in_clause(column: str, values: Sequence[str]) -> tuple[str, list[str]]:
 
 
 def _country_clause(column: str, values: Sequence[str]) -> tuple[str, list[str]]:
-    """Match any country in the comma-joined ``column`` against ``values``."""
+    """Match any country in the comma-joined ``column`` against ``values``.
+
+    Source values may contain whitespace around the separator
+    (``"China, Japan"``) and arrive in any order. We normalise the column by
+    collapsing ``", "`` and ``" ,"`` into ``","`` (preserving internal spaces
+    such as ``"United States"``), wrap the value in commas to enforce token
+    boundaries, then test each selected country independently with ``LIKE``
+    (case-insensitive in SQLite by default for ASCII).
+    """
     if not values:
         return "", []
-    parts = [f"(',' || {column} || ',') LIKE ?" for _ in values]
-    params = [f"%,{v},%" for v in values]
+    normalised = (
+        f"(',' || REPLACE(REPLACE({column}, ', ', ','), ' ,', ',') || ',')"
+    )
+    parts = [f"{normalised} LIKE ?" for _ in values]
+    params = [f"%,{v.strip()},%" for v in values]
     return f" AND ({' OR '.join(parts)})", params
 
 
