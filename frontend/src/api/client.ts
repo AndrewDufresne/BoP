@@ -6,16 +6,15 @@ export const api = axios.create({
 });
 
 export interface FilterOptions {
-  regions: string[];
   countries: string[];
   statuses: string[];
-  countries_by_region: Record<string, string[]>;
+  purposes: string[];
 }
 
 export interface FilterPayload {
-  regions: string[];
   countries: string[];
   statuses: string[];
+  purposes: string[];
 }
 
 export interface TableResponse {

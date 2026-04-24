@@ -17,7 +17,7 @@ const TAB_INVENTORY = "inventory";
 const TAB_DQM = "dqm";
 const TAB_LIMITATIONS = "limitations";
 
-const EMPTY_FILTERS: FilterPayload = { regions: [], countries: [], statuses: [] };
+const EMPTY_FILTERS: FilterPayload = { countries: [], statuses: [], purposes: [] };
 
 export default function App() {
   const [filters, setFilters] = useState<FilterPayload>(EMPTY_FILTERS);
@@ -98,9 +98,9 @@ export default function App() {
             Model Inventory &amp; EUC
           </h2>
           <p className="mt-1 text-sm text-ink-secondary">
-            Filter by Region, Country and Model Status across all three
-            datasets, preview below, and export everything to a single Excel
-            workbook.
+            Filter by Country, Model Status and Model Use Case Purpose across
+            all three datasets, preview below, and export everything to a
+            single Excel workbook.
           </p>
         </div>
 
